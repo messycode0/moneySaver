@@ -1,5 +1,5 @@
 use std::path::Path;
-use std::io::{self, Write};
+use std::io::{self, ErrorKind, Write};
 use std::process::exit;
 use std::fs::File;
 
@@ -21,7 +21,13 @@ fn main() {
     // MSDF :: Money Saver Data File
     if data_file_exist == false {
         println!("Data File DOES NOT exist!...\nStarting first time start...");
-        let _ = first_start(&usrname);
+        let _fso = first_start(&usrname);
+
+        println!("\nfso.is_ok: {}", _fso.is_ok() );
+        if _fso.is_err() == true {
+            println!("well something went wrong...\n");
+            // panic!("{}", _fso);
+        }
     }
 
 }
@@ -32,12 +38,9 @@ fn first_start(usrname: &str) -> std::io::Result<()>{
     println!("\nHI! My name is Kimmy, I am here to help you save money for an item. Lets get started");
     println!("Type \"yes\" to allow me to create a MSDF file in your Documents directiory. This is so I can remember things.");
 
-    let mut answer: String = String::new();
-    io::stdin()
-        .read_line(&mut answer)
-        .expect("failed to read answer...");
-    let answer: &str = answer.trim();
-    
+    println!("\n(Wanting to make {} ) (y/N)", &format!("/home/{usrname}/Documents/MSDF"));
+
+    let answer = read_line_ms("n".to_string());   
 
     // Checks if user allowed to cont
     match answer.to_lowercase().as_str() {
@@ -49,7 +52,7 @@ fn first_start(usrname: &str) -> std::io::Result<()>{
             exit(0); 
         },
         _ => {
-            println!("That is not a yes.. so braking out. try again.");
+            println!("That is not a yes.. so breaking out. try again.");
             exit(0);
         }
     }
@@ -64,34 +67,34 @@ fn first_start(usrname: &str) -> std::io::Result<()>{
     // }
     
     println!("creating file...");
-    let mut msdf_file_create_var: File = File::create(&format!("/home/{usrname}/Documents/MSDF"))?;
+    let msdf_file_create_var_res = File::create(&format!("/home/{usrname}/Documents/MSDF"));
+    let mut msdf_file_create_var = match msdf_file_create_var_res {
+        Ok(file) => file,
+        Err(error) => match error.kind() {
+            ErrorKind::NotFound => {
+                panic!("\n{:?}, \nThis is an easy fix, Could NOT Find/Open: {}/Documents\n\nPlease Create /Documents\n", error, usrname);
+
+            },
+            _ => {
+                panic!("Problem creating the file: {:?}", error);
+            }
+        }
+    };
     let _ =msdf_file_create_var.write_all(b"Written from MoneySaver :: This is data saved, you may change it here or from the program.\n");
     println!("file created.");
 
     line_break();
     // Ask for what to save for and price etc.
     println!("\nnow a couple of questions.. what are you trying to save up for?");
-    let mut item_to_save_up: String = String::new();
-    io::stdin()
-        .read_line(&mut item_to_save_up)
-        .expect("failed to read item_to_save_up");
-    let item_to_save_up: &str = &item_to_save_up.trim();
+    let  item_to_save_up = read_line_ms("n".to_string());  
     line_break();
 
     println!("now, how much does it cost?");
-    let mut item_cost: String = String::new();
-    io::stdin()
-        .read_line(&mut item_cost)
-        .expect("failed to read item_cost");
-    let item_cost: &str = &item_cost.trim();
+    let item_cost = read_line_ms("n".to_string());  
     line_break();
 
     println!("how much do you have right now?");
-    let mut curr_amount: String = String::new();
-    io::stdin()
-        .read_line(&mut curr_amount)
-        .expect("failed to read curr_amount");
-    let curr_amount: &str = &&curr_amount.trim();
+    let curr_amount = read_line_ms("n".to_string());  
     line_break();
 
     //convert &str to i32
@@ -132,4 +135,15 @@ fn first_start(usrname: &str) -> std::io::Result<()>{
 
 fn line_break() {
     println!("=================================");
+}
+
+// Dont ask why but it has to be like this... I dont get it...
+// read_line_ms("n".to_string());  
+fn read_line_ms(_x: String) -> String { 
+    let mut answer: String = String::new();
+    io::stdin()
+        .read_line(&mut answer)
+        .expect("failed to read answer...");
+    let answer: &str = answer.trim();
+    return answer.to_string();
 }
