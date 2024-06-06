@@ -8,6 +8,7 @@ fn main() {
     println!("Money Tracker!");
 
     util::line_break();
+    println!("Start-up Data");
 
     let usrname: String = whoami::username();
     println!("Username: {}", usrname);
@@ -17,6 +18,7 @@ fn main() {
 
     let data_file_exist: bool = Path::new(&format!("/home/{usrname}/Documents/MSDF")).exists();
     println!("Data File Exists: {}", data_file_exist);
+    println!("Documents Directory Exists: {}", Path::new(&format!("/home/{usrname}/Documents/")).exists());
     util::line_break();
 
     // MSDF :: Money Saver Data File

@@ -1,7 +1,7 @@
 // use std::path::Path;
 use std::io::{ErrorKind, Write};
 use std::process::exit;
-use std::fs::File;
+use std::fs::{self, File};
 
 use super::util;
 
@@ -45,8 +45,14 @@ pub fn first_start(usrname: &str) -> std::io::Result<()>{
         Ok(file) => file,
         Err(error) => match error.kind() {
             ErrorKind::NotFound => {
+                let _cddr = create_doc_dir(usrname);
+                match _cddr {
+                    Ok(_) => println!("Passsed!"),
+                    Err(e) => {
+                        panic!("Failed create Doc : {:?}", e)
+                    }
+                }
                 panic!("\n{:?}, \nThis is an easy fix, Could NOT Find/Open: {}/Documents\n\nPlease Create /Documents\n", error, usrname);
-
             },
             _ => {
                 panic!("Problem creating the file: {:?}", error);
@@ -104,4 +110,29 @@ pub fn first_start(usrname: &str) -> std::io::Result<()>{
 
     Ok(())  
 
+}
+
+fn create_doc_dir(usrname: &str) -> Result<(), ()> {
+    println!("It seems like you are missing a /Documents Directory.");
+    println!("Shall I create the Documents Directory? \n(Wanting to make /home/{}/Documents) (y/N)", usrname);
+    let answer = util::read_line_ms("n".to_string());
+
+    match answer.to_lowercase().as_str() {
+        "yes" => println!("Passed!"),
+        "y" => println!("Passed!"),
+        _ => {
+            panic!("Cant create Direct. Faild to get Premissions")
+        }
+    }
+
+    let dir_res = fs::create_dir(format!("/home/{}/Documents", usrname));
+    let _dir_fin = match dir_res {
+        Ok(_dir) => {
+            util::line_break();
+            println!("THE DIRECTORY IS MADE! RE-RUN THE PROGRAM TO TAKE EFFECT! (Dont Listen to the Errors)");
+            util::line_break();
+        },
+        Err(e) => panic!("Could not create Document Direct. {e}") 
+    };
+    Ok(())
 }
